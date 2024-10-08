@@ -7,32 +7,38 @@ const ResultsPage = () => {
   const location = useLocation();
   const [test, setTest] = useState(null);
   const [userAnswers, setUserAnswers] = useState([]);
+  const [loading, setLoading] = useState(true); // State to manage loading status
+  const [error, setError] = useState(null); // State to handle errors
 
   useEffect(() => {
-    // Fetch the test and user's answers to show wrong answers
-    axios.get(`https://test-website-fov5.onrender.com/test/${testId}`)
-      .then(response => {
-        setTest(response.data);
-      })
-      .catch(error => {
-        console.error("Error fetching test data:", error);
-      });
+    const fetchData = async () => {
+      try {
+        // Fetch the test data
+        const testResponse = await axios.get(`https://test-website-fov5.onrender.com/test/${testId}`);
+        setTest(testResponse.data);
 
-    axios.get(`https://test-website-fov5.onrender.com/answer/${testId}`)  // Adjust this to fetch user's answers
-      .then(response => {
-        setUserAnswers(response.data.user_answers);
-      })
-      .catch(error => {
-        console.error("Error fetching answers:", error);
-      });
+        // Fetch the user's answers
+        const answersResponse = await axios.get(`https://test-website-fov5.onrender.com/answer/${testId}`);
+        setUserAnswers(answersResponse.data.user_answers);
+      } catch (error) {
+        console.error("Error fetching test or answer data:", error);
+        setError("Failed to fetch data. Please try again later."); // Set error message
+      } finally {
+        setLoading(false); // Set loading to false after data fetch is complete
+      }
+    };
+
+    fetchData();
   }, [testId]);
 
-  if (!test) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>; // Show loading state
+  if (error) return <div style={{ color: 'red' }}>{error}</div>; // Display error message if there's an error
+  if (!test) return <div>No test found.</div>; // Handle case where test data is not found
 
   return (
     <div>
       <h1>Test Results</h1>
-      <p>Your score: {location.state?.score}</p>
+      <p>Your score: {location.state?.score || 'N/A'}</p> {/* Display 'N/A' if score is not available */}
 
       <h2>Incorrect Answers:</h2>
       {test.questions.map(question => {
@@ -46,7 +52,7 @@ const ResultsPage = () => {
             </div>
           );
         }
-        return null;
+        return null; // Skip if answer is correct or not found
       })}
     </div>
   );

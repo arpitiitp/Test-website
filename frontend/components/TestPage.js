@@ -8,25 +8,34 @@ const TestPage = () => {
   const [test, setTest] = useState(null);
   const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(0);
+  const [loading, setLoading] = useState(true); // State to manage loading
+  const [error, setError] = useState(null); // State to handle errors
 
   useEffect(() => {
-    axios.get(`https://test-website-fov5.onrender.com/test/${testId}`)
-      .then(response => {
+    const fetchTestData = async () => {
+      try {
+        const response = await axios.get(`https://test-website-fov5.onrender.com/test/${testId}`);
         setTest(response.data);
         setTimeLeft(response.data.time_limit * 60);  // Time in seconds
-      })
-      .catch(error => {
+      } catch (error) {
         console.error("Error fetching test data:", error);
-      });
+        setError("Failed to load test data. Please try again later.");
+      } finally {
+        setLoading(false); // Set loading to false after fetching data
+      }
+    };
+
+    fetchTestData();
   }, [testId]);
 
   useEffect(() => {
+    let timerId;
     if (timeLeft === 0 && test) {
       handleSubmit();
     } else if (timeLeft > 0) {
-      const timerId = setInterval(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearInterval(timerId);
+      timerId = setInterval(() => setTimeLeft(prevTime => prevTime - 1), 1000);
     }
+    return () => clearInterval(timerId); // Clear timer on cleanup
   }, [timeLeft, test]);
 
   const handleAnswerChange = (questionId, option) => {
@@ -36,31 +45,33 @@ const TestPage = () => {
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const userAnswers = Object.keys(answers).map(questionId => ({
       question_id: questionId,
       selected_option: answers[questionId]
     }));
 
-    axios.post('https://test-website-fov5.onrender.com/answer/submit', {
-      user_id: 'currentUserId',  // You need to pass current user id
-      test_id: testId,
-      user_answers: userAnswers
-    })
-    .then(response => {
+    try {
+      const response = await axios.post('https://test-website-fov5.onrender.com/answer/submit', {
+        user_id: 'currentUserId',  // Replace with the actual user ID
+        test_id: testId,
+        user_answers: userAnswers
+      });
       navigate(`/results/${testId}`, { state: { score: response.data.score } });
-    })
-    .catch(error => {
+    } catch (error) {
       console.error("Error submitting answers:", error);
-    });
+      setError("Failed to submit answers. Please try again later.");
+    }
   };
 
-  if (!test) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>; // Show loading state
+  if (error) return <div style={{ color: 'red' }}>{error}</div>; // Display error message
+  if (!test) return <div>No test found.</div>; // Handle case where no test is found
 
   return (
     <div>
       <h1>{test.test_name}</h1>
-      <p>Time left: {Math.floor(timeLeft / 60)}:{timeLeft % 60}</p>
+      <p>Time left: {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}</p>
 
       {test.questions.map(question => (
         <div key={question._id}>
