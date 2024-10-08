@@ -6,7 +6,7 @@ const Home = () => {
   const [tests, setTests] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/test')
+    axios.get('https://test-website-fov5.onrender.com')
       .then(response => {
         setTests(response.data);
       })

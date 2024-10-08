@@ -10,7 +10,7 @@ const TestPage = () => {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
-    axios.get(`http://localhost:5000/test/${testId}`)
+    axios.get(`https://test-website-fov5.onrender.com/test/${testId}`)
       .then(response => {
         setTest(response.data);
         setTimeLeft(response.data.time_limit * 60);  // Time in seconds
@@ -42,7 +42,7 @@ const TestPage = () => {
       selected_option: answers[questionId]
     }));
 
-    axios.post('http://localhost:5000/answer/submit', {
+    axios.post('https://test-website-fov5.onrender.com/answer/submit', {
       user_id: 'currentUserId',  // You need to pass current user id
       test_id: testId,
       user_answers: userAnswers

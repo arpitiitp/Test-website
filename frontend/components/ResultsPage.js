@@ -10,7 +10,7 @@ const ResultsPage = () => {
 
   useEffect(() => {
     // Fetch the test and user's answers to show wrong answers
-    axios.get(`http://localhost:5000/test/${testId}`)
+    axios.get(`https://test-website-fov5.onrender.com/test/${testId}`)
       .then(response => {
         setTest(response.data);
       })
@@ -18,7 +18,7 @@ const ResultsPage = () => {
         console.error("Error fetching test data:", error);
       });
 
-    axios.get(`http://localhost:5000/answer/${testId}`)  // Adjust this to fetch user's answers
+    axios.get(`https://test-website-fov5.onrender.com/answer/${testId}`)  // Adjust this to fetch user's answers
       .then(response => {
         setUserAnswers(response.data.user_answers);
       })
